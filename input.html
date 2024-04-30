@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Real-Time Sensor Data with Predictions</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script> <!-- TensorFlow.js -->
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+
+    #sensorOutput {
+      text-align: center;
+      border: 1px solid #ccc;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #sensorTable {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #sensorTable th,
+    #sensorTable td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    #sensorTable th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="sensorOutput">
+    <h2>Sensor Data Table with Predictions</h2>
+    <table id="sensorTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>VelInc_X</th>
+          <th>VelInc_Y</th>
+          <th>VelInc_Z</th>
+          <th>OriInc_w</th>
+          <th>OriInc_x</th>
+          <th>OriInc_y</th>
+          <th>OriInc_z</th>
+          <th>Acc_X</th>
+          <th>Acc_Y</th>
+          <th>Acc_Z</th>
+          <th>Gyr_X</th>
+          <th>Gyr_Y</th>
+          <th>Gyr_Z</th>
+          <th>Mag_X</th>
+          <th>Mag_Y</th>
+          <th>Mag_Z</th>
+          <th>Roll</th>
+          <th>Pitch</th>
+          <th>Yaw</th>
+          <th>Prediction</th> <!-- New prediction column -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be added here -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Define sensor data objects
+    const velocity = { x: 0, y: 0, z: 0 };
+    const orientation = { w: 0, x: 0, y: 0, z: 0 };
+    const acceleration = { x: 0, y: 0, z: 0 };
+    const gyroscope = { x: 0, y: 0, z: 0 };
+    const magnetometer = { x: 0, y: 0, z: 0 };
+
+    const sensorTableBody = document.getElementById("sensorTable").querySelector("tbody");
+
+    let model;
+    (async () => {
+      try {
+        model = await tf.loadGraphModel('./model.json'); // Path to your TensorFlow.js model
+      } catch (error) {
+        console.error("Error loading model:", error);
+      }
+    })();
+
+    let lastTimestamp = null;
+
+    // Function to create a new table row with prediction
+    async function addSensorDataWithPrediction() {
+      const newRow = document.createElement("tr");
+
+      const currentTime = new Date().toLocaleTimeString();
+
+      const exampleData = [
+        velocity.x,
+        velocity.y,
+        velocity.z,
+        orientation.w,
+        orientation.x,
+        orientation.y,
+        orientation.z,
+        acceleration.x,
+        acceleration.y,
+        acceleration.z,
+        gyroscope.x,
+        gyroscope.y,
+        gyroscope.z,
+        magnetometer.x,
+        magnetometer.y,
+        magnetometer.z,
+        orientation.y,
+        orientation.x,
+        orientation.w
+      ];
+
+      if (model) {
+        const inputTensor = tf.tensor2d([exampleData], [1, 19], 'float32'); // Input tensor
+        const prediction = model.predict(inputTensor);
+        const predictionValue = (await prediction.data())[0].toFixed(2); // Get the first prediction
+
+        newRow.innerHTML = `
+      <td>${currentTime}</td>
+      <td>${velocity.x.toFixed(2)}</td>
+      <td>${velocity.y.toFixed(2)}</td>
+      <td>${velocity.z.toFixed(2)}</td>
+      <td>${orientation.w.toFixed(2)}</td>
+      <td>${orientation.x.toFixed(2)}</td>
+      <td>${orientation.y.toFixed(2)}</td>
+      <td>${orientation.z.toFixed(2)}</td>
+      <td>${acceleration.x.toFixed(2)}</td>
+      <td>${acceleration.y.toFixed(2)}</td>
+      <td>${acceleration.z.toFixed(2)}</td>
+      <td>${gyroscope.x.toFixed(2)}</td>
+      <td>${gyroscope.y.toFixed(2)}</td>
+      <td>${gyroscope.z.toFixed(2)}</td>
+      <td>${magnetometer.x.toFixed(2)}</td>
+      <td>${magnetometer.y.toFixed(2)}</td>
+      <td>${magnetometer.z.toFixed(2)}</td>
+      <td>${orientation.y.toFixed(2)}</td> 
+      <td>${orientation.x.toFixed(2)}</td> 
+      <td>${orientation.w.toFixed(2)}</td> 
+      <td>${predictionValue}</td> 
+    `;
+      } else {
+        newRow.innerHTML = `
+      <td>${currentTime}</td>
+      <td>${velocity.x.toFixed(2)}</td>
+      <td>${velocity.y.toFixed(2)}</td>
+      <td>${velocity.z.toFixed(2)}</td>
+      <td>${orientation.w.toFixed(2)}</td>
+      <td>${orientation.x.toFixed(2)}</td>
+      <td>${orientation.y.toFixed(2)}</td>
+      <td>${orientation.z.toFixed(2)}</td>
+      <td>${acceleration.x.toFixed(2)}</td>
+      <td>${acceleration.y.toFixed(2)}</td>
+      <td>${acceleration.z.toFixed(2)}</td>
+      <td>${gyroscope.x.toFixed(2)}</td>
+      <td>${gyroscope.y.toFixed(2)}</td>
+      <td>${gyroscope.z.toFixed(2)}</td>
+      <td>${magnetometer.x.toFixed(2)}</td>
+      <td>${magnetometer.y.toFixed(2)}</td>
+      <td>${magnetometer.z.toFixed(2)}</td>
+      <td>${orientation.y.toFixed(2)}</td> // Roll
+      <td>${orientation.x.toFixed(2)}</td> // Pitch
+      <td>${orientation.w.toFixed(2)}</td> // Yaw
+      <td>N/A</td> // If model isn't loaded
+    `;
+      }
+
+      sensorTableBody.appendChild(newRow);
+    }
+
+    // Listen for device motion events (for accelerometer and gyroscope)
+    window.addEventListener("devicemotion", (event) => {
+      const { acceleration, rotationRate, timeStamp } = event;
+
+      if (acceleration) {
+        if (lastTimestamp !== null) {
+          const dt = (timeStamp - lastTimestamp) / 1000; // Convert to seconds
+
+          // Integrate acceleration to get velocity
+          velocity.x += (acceleration.x ?? 0) * dt;
+          velocity.y += (acceleration.y ?? 0) * dt;
+          velocity.z += (acceleration.z ?? 0) * dt;
+        }
+
+        lastTimestamp = timeStamp;
+
+        acceleration.x = acceleration.x ?? 0;
+        acceleration.y = acceleration.y ?? 0;
+        acceleration.z = acceleration.z ?? 0;
+      }
+
+      // Update gyroscope data
+      if (rotationRate) {
+        gyroscope.x = rotationRate.alpha ?? 0;
+        gyroscope.y = rotationRate.beta ?? 0;
+        gyroscope.z = rotationRate.gamma ?? 0;
+      }
+    });
+
+    // Listen for device orientation events
+    window.addEventListener("deviceorientation", (event) => {
+      const { alpha, beta, gamma } = event;
+
+      orientation.w = alpha ?? 0;
+      orientation.x = beta ?? 0;
+      orientation.y = gamma ?? 0;
+      orientation.z = alpha ?? 0;
+    });
+
+    // Update the sensor data table every 3 seconds, adding predictions
+    setInterval(() => {
+      addSensorDataWithPrediction();
+    }, 3000); // 3-second interval
+  </script>
+
+</body>
+
+</html>
